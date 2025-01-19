@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта и опрос</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
+</head>
+<body>
+    <div id="map"></div>
+    <div class="container">
+        <h2>Выберите ближайший травмпункт:</h2>
+        <select id="trauma-center-select">
+            <option value="">Выберите травмпункт</option>
+        </select>
+
+        <div class="survey">
+            <h3>Опрос</h3>
+            <form id="survey-form">
+                <label for="rating">Оцените качество обслуживания (1-5):</label><br>
+                <input type="number" id="rating" name="rating" min="1" max="5" required><br><br>
+
+                <label for="feedback">Ваши отзывы:</label><br>
+                <textarea id="feedback" name="feedback" rows="4" cols="50" required></textarea><br><br>
+
+                <button type="submit">Отправить</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
