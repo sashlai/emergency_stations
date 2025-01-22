@@ -26,13 +26,7 @@ body {
     margin-bottom: 5px;
 }
 
-.form-group select {
-    width: 100%;
-    padding: 10px;
-    font-size: 14px;
-    margin-top: 5px;
-}
-
+.form-group select,
 .form-group input {
     width: 100%;
     padding: 10px;
@@ -73,7 +67,9 @@ body {
     background-color: #0056b3;
 }
 
-#search-input {
-    width: 100%;
-    max-width: 600px;
+.info-box {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
 }

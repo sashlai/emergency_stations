@@ -4,25 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Опрос травмпункта</title>
-    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
 
+        #map {
+            height: 400px;
+            margin: 20px 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            border: 1px solid #ccc;
+            z-index: 1000;
+        }
+
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .suggestion-item:hover {
+            background: #f0f0f0;
+        }
+
+        .form-group button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+
+        .info-box {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>Травмпункты Москвы</h1>
+
         <div class="form-group">
             <label for="search-input">Поиск травмпункта</label>
             <input type="text" id="search-input" placeholder="Введите название травмпункта">
             <div id="suggestions" class="suggestions"></div>
         </div>
+
         <div class="form-group">
             <label for="trauma-center-select">Выберите травмпункт</label>
             <select id="trauma-center-select">
                 <option value="">-- Выберите травмпункт --</option>
             </select>
         </div>
+
         <div id="map"></div>
+
+        <div id="trauma-center-info" class="info-box" style="display: none;">
+            <h2>Информация о травмпункте</h2>
+            <p><strong>Категория:</strong> <span id="info-category"></span></p>
+            <p><strong>Руководитель:</strong> <span id="info-chief"></span></p>
+            <p><strong>Должность:</strong> <span id="info-position"></span></p>
+            <p><strong>Пол:</strong> <span id="info-gender"></span></p>
+            <p><strong>Статус:</strong> <span id="info-status"></span></p>
+            <p><strong>Дополнительная информация:</strong> <span id="info-extra"></span></p>
+        </div>
+
         <form id="survey-form">
             <h2>Оцените качество обслуживания</h2>
 
@@ -100,6 +189,16 @@
                 <button type="submit">Отправить</button>
             </div>
         </form>
+
+        <div id="statistics" class="info-box" style="display: none;">
+            <h2>Статистика оценок</h2>
+            <p><strong>Среднее время ожидания:</strong> <span id="stat-waiting-time"></span></p>
+            <p><strong>Средний профессионализм:</strong> <span id="stat-professionalism"></span></p>
+            <p><strong>Средняя вежливость:</strong> <span id="stat-politeness"></span></p>
+            <p><strong>Средняя понятность объяснений:</strong> <span id="stat-clarity"></span></p>
+            <p><strong>Средняя чистота и комфорт:</strong> <span id="stat-cleanliness"></span></p>
+            <p><strong>Среднее время визита:</strong> <span id="stat-visit-time"></span></p>
+        </div>
     </div>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <script src="script.js"></script>
