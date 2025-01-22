@@ -3,89 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Опрос травмпункта</title>
+    <title>Травмпункты Москвы</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        #map {
-            height: 400px;
-            margin: 20px 0;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-            position: relative;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .form-group select,
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            font-size: 14px;
-            margin-top: 5px;
-            box-sizing: border-box;
-        }
-
-        .suggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            background: white;
-            border: 1px solid #ccc;
-            z-index: 1000;
-        }
-
-        .suggestion-item {
-            padding: 10px;
-            cursor: pointer;
-        }
-
-        .suggestion-item:hover {
-            background: #f0f0f0;
-        }
-
-        .form-group button {
-            background-color: #007BFF;
-            color: white;
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            cursor: pointer;
-        }
-
-        .form-group button:hover {
-            background-color: #0056b3;
-        }
-
-        .info-box {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            background-color: #f9f9f9;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="container">
         <h1>Травмпункты Москвы</h1>
+        <p>Этот сайт предназначен для сбора и анализа данных о качестве работы травматологических пунктов.<br>Вы можете выбрать интересующий вас пункт, ознакомиться с его информацией и оставить свою оценку, чтобы помочь улучшить качество медицинских услуг.</p>
 
         <div class="form-group">
             <label for="search-input">Поиск травмпункта</label>
@@ -203,4 +129,7 @@
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <script src="script.js"></script>
 </body>
+<footer>
+    <p>Датасет "Травматологические пункты" был взят с <a href="https://data.mos.ru/opendata/1260?pageSize=10&pageIndex=0&isDynamic=false&version=2&release=158" target="_blank">портала открытых данных правительства Москвы</a>.</p>
+</footer>
 </html>
