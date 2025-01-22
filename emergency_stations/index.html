@@ -3,32 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Карта и опрос</title>
+    <title>Опрос травмпункта</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
+
 </head>
 <body>
-    <div id="map"></div>
     <div class="container">
-        <h2>Выберите ближайший травмпункт:</h2>
-        <select id="trauma-center-select">
-            <option value="">Выберите травмпункт</option>
-        </select>
-
-        <div class="survey">
-            <h3>Опрос</h3>
-            <form id="survey-form">
-                <label for="rating">Оцените качество обслуживания (1-5):</label><br>
-                <input type="number" id="rating" name="rating" min="1" max="5" required><br><br>
-
-                <label for="feedback">Ваши отзывы:</label><br>
-                <textarea id="feedback" name="feedback" rows="4" cols="50" required></textarea><br><br>
-
-                <button type="submit">Отправить</button>
-            </form>
+        <h1>Травмпункты Москвы</h1>
+        <div class="form-group">
+            <label for="search-input">Поиск травмпункта</label>
+            <input type="text" id="search-input" placeholder="Введите название травмпункта">
+            <div id="suggestions" class="suggestions"></div>
         </div>
-    </div>
+        <div class="form-group">
+            <label for="trauma-center-select">Выберите травмпункт</label>
+            <select id="trauma-center-select">
+                <option value="">-- Выберите травмпункт --</option>
+            </select>
+        </div>
+        <div id="map"></div>
+        <form id="survey-form">
+            <h2>Оцените качество обслуживания</h2>
 
+            <div class="form-group">
+                <label for="waiting-time">Время ожидания приема</label>
+                <select id="waiting-time" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="5">Очень быстро</option>
+                    <option value="4">Быстро</option>
+                    <option value="3">Приемлемо</option>
+                    <option value="2">Долго</option>
+                    <option value="1">Очень долго</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="professionalism">Профессионализм медицинского персонала</label>
+                <select id="professionalism" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="5">Отлично</option>
+                    <option value="4">Хорошо</option>
+                    <option value="3">Удовлетворительно</option>
+                    <option value="2">Плохо</option>
+                    <option value="1">Очень плохо</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="politeness">Вежливость сотрудников</label>
+                <select id="politeness" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="5">Да, очень вежливы</option>
+                    <option value="4">Вежливы</option>
+                    <option value="3">Иногда невежливы</option>
+                    <option value="2">Часто невежливы</option>
+                    <option value="1">Очень грубы</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="clarity">Понятность объяснений</label>
+                <select id="clarity" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="5">Очень подробно</option>
+                    <option value="4">Достаточно подробно</option>
+                    <option value="3">Могли бы объяснить лучше</option>
+                    <option value="2">Почти ничего не объяснили</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="cleanliness">Чистота и комфорт</label>
+                <select id="cleanliness" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="5">Отлично</option>
+                    <option value="4">Хорошо</option>
+                    <option value="3">Удовлетворительно</option>
+                    <option value="2">Плохо</option>
+                    <option value="1">Очень плохо</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="visit-time">Общее время визита</label>
+                <select id="visit-time" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="5">Менее 30 минут</option>
+                    <option value="4">30–60 минут</option>
+                    <option value="3">1–2 часа</option>
+                    <option value="1">Более 2 часов</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <button type="submit">Отправить</button>
+            </div>
+        </form>
+    </div>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <script src="script.js"></script>
 </body>
