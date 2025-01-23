@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Травмпункты Москвы</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav class="navigation">
+            <ul>
+                <li><a href="index.html" class="active">Главная</a></li>
+                <li><a href="centers.html">Список травмпунктов</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+
+    <div class="container">
+        <h1>Травмпункты Москвы</h1>
+        <p>Этот сайт предназначен для сбора и анализа данных о качестве работы травматологических пунктов.<br>Вы можете выбрать интересующий вас пункт, ознакомиться с его информацией и оставить свою оценку, чтобы помочь улучшить качество медицинских услуг.</p>
+
+        <div class="form-group">
+            <label for="search-input">Поиск травмпункта</label>
+            <input type="text" id="search-input" placeholder="Введите название травмпункта">
+            <div id="suggestions" class="suggestions"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="trauma-center-select">Выберите травмпункт</label>
+            <select id="trauma-center-select">
+                <option value="">-- Выберите травмпункт --</option>
+            </select>
+        </div>
+
+        <div id="map"></div>
+
+        <div id="trauma-center-info" class="info-box" style="display: none;">
+            <h2>Информация о травмпункте</h2>
+            <p><strong>Категория:</strong> <span id="info-category"></span></p>
+            <p><strong>Руководитель:</strong> <span id="info-chief"></span></p>
+            <p><strong>Должность:</strong> <span id="info-position"></span></p>
+            <p><strong>Пол:</strong> <span id="info-gender"></span></p>
+            <p><strong>Статус:</strong> <span id="info-status"></span></p>
+            <p><strong>Дополнительная информация:</strong> <span id="info-extra"></span></p>
+        </div>
+
+        <form id="survey-form">
+            <h2>Оцените качество обслуживания</h2>
+
+            <div class="form-group">
+                <label for="waiting-time">Время ожидания приема</label>
+                <select id="waiting-time" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="5">Очень быстро</option>
+                    <option value="4">Быстро</option>
+                    <option value="3">Приемлемо</option>
+                    <option value="2">Долго</option>
+                    <option value="1">Очень долго</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="professionalism">Профессионализм медицинского персонала</label>
+                <select id="professionalism" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="5">Отлично</option>
+                    <option value="4">Хорошо</option>
+                    <option value="3">Удовлетворительно</option>
+                    <option value="2">Плохо</option>
+                    <option value="1">Очень плохо</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="politeness">Вежливость сотрудников</label>
+                <select id="politeness" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="5">Да, очень вежливы</option>
+                    <option value="4">Вежливы</option>
+                    <option value="3">Иногда невежливы</option>
+                    <option value="2">Часто невежливы</option>
+                    <option value="1">Очень грубы</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="clarity">Понятность объяснений</label>
+                <select id="clarity" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="5">Очень подробно</option>
+                    <option value="4">Достаточно подробно</option>
+                    <option value="3">Могли бы объяснить лучше</option>
+                    <option value="2">Почти ничего не объяснили</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="cleanliness">Чистота и комфорт</label>
+                <select id="cleanliness" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="5">Отлично</option>
+                    <option value="4">Хорошо</option>
+                    <option value="3">Удовлетворительно</option>
+                    <option value="2">Плохо</option>
+                    <option value="1">Очень плохо</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="visit-time">Общее время визита</label>
+                <select id="visit-time" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="5">Менее 30 минут</option>
+                    <option value="4">30–60 минут</option>
+                    <option value="3">1–2 часа</option>
+                    <option value="1">Более 2 часов</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <button type="submit">Отправить</button>
+            </div>
+        </form>
+
+        <div id="statistics" class="info-box" style="display: none;">
+            <h2>Статистика оценок</h2>
+            <p><strong>Среднее время ожидания:</strong> <span id="stat-waiting-time"></span></p>
+            <p><strong>Средний профессионализм:</strong> <span id="stat-professionalism"></span></p>
+            <p><strong>Средняя вежливость:</strong> <span id="stat-politeness"></span></p>
+            <p><strong>Средняя понятность объяснений:</strong> <span id="stat-clarity"></span></p>
+            <p><strong>Средняя чистота и комфорт:</strong> <span id="stat-cleanliness"></span></p>
+            <p><strong>Среднее время визита:</strong> <span id="stat-visit-time"></span></p>
+            <p><strong>Количество отзывов:</strong> <span id="stat-total-reviews"></span></p>
+            <p><strong>Общая оценка:</strong> <span id="stat-overall-rating"></span></p>
+        </div>               
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+<footer>
+    <p>Датасет "Травматологические пункты" был взят с <a href="https://data.mos.ru/opendata/1260?pageSize=10&pageIndex=0&isDynamic=false&version=2&release=158" target="_blank">портала открытых данных правительства Москвы</a>.</p>
+</footer>
+</html>
