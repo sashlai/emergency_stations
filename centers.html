@@ -14,30 +14,37 @@
                 <li><a href="centers.html" class="active">Список травмпунктов</a></li>
             </ul>
         </nav>
-    </header>    
+    </header>
 
-    <div class="container">
+    <main class="container">
         <h1>Список травматологических пунктов</h1>
         <p>Здесь представлены все травматологические пункты с их средней оценкой.</p>
 
+        <p id="table-status" class="status" role="status" aria-live="polite"></p>
+        <button id="retry-load" type="button" hidden>Повторить загрузку</button>
+        <div class="table-scroll" role="region" aria-label="Рейтинг травмпунктов" tabindex="0">
         <table id="centers-table">
+            <caption>Травмпункты по убыванию общей оценки. Оценки — от 1 до 5.</caption>
             <thead>
                 <tr>
-                    <th>Название</th>
-                    <th>Категория</th>
-                    <th>Средняя оценка</th>
-                    <th>Количество отзывов</th>
+                    <th scope="col">Название</th>
+                    <th scope="col">Категория</th>
+                    <th scope="col">Средняя оценка</th>
+                    <th scope="col">Количество отзывов</th>
                 </tr>
             </thead>
             <tbody>
             </tbody>
         </table>
-    </div>
+        </div>
+    </main>
 
+    <script src="api.js"></script>
     <script src="centers.js"></script>
 
     <footer>
-        <p>Датасет "Травматологические пункты" был взят с <a href="https://data.mos.ru/opendata/1260?pageSize=10&pageIndex=0&isDynamic=false&version=2&release=158" target="_blank">портала открытых данных правительства Москвы</a>.</p>
+        <p>Учебный проект. Оценки в демонстрационной базе — тестовые.</p>
+        <p>Датасет "Травматологические пункты" был взят с <a href="https://data.mos.ru/opendata/1260?pageSize=10&pageIndex=0&isDynamic=false&version=2&release=158" target="_blank" rel="noopener noreferrer">портала открытых данных правительства Москвы</a>.</p>
     </footer>
 </body>
 </html>

@@ -186,6 +186,12 @@ ALTER TABLE `service_ratings`
 --
 ALTER TABLE `service_ratings`
   ADD CONSTRAINT `service_ratings_ibfk_1` FOREIGN KEY (`id`) REFERENCES `emergency_stations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `service_ratings`
+  ADD CONSTRAINT `rating_range` CHECK (
+    waiting_time BETWEEN 1 AND 5 AND professionalism BETWEEN 1 AND 5 AND
+    politeness BETWEEN 1 AND 5 AND clarity BETWEEN 1 AND 5 AND
+    cleanliness BETWEEN 1 AND 5 AND visit_time BETWEEN 1 AND 5
+  );
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

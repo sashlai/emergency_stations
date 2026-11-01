@@ -1,40 +1,20 @@
 <?php
-header('Content-Type: application/json');
-
-$conn = new mysqli('localhost', 'root', '', 'emergency_stations');
-if ($conn->connect_error) {
-    echo json_encode(['error' => 'Ошибка подключения к базе данных']);
-    exit;
-}
-
-$id = $_GET['id'];
-if (!$id) {
-    echo json_encode(['error' => 'Не указан идентификатор травмпункта']);
-    exit;
-}
-
-$query = "SELECT 
-            AVG(waiting_time) AS waiting_time, 
-            AVG(professionalism) AS professionalism, 
-            AVG(politeness) AS politeness, 
-            AVG(clarity) AS clarity, 
-            AVG(cleanliness) AS cleanliness, 
-            AVG(visit_time) AS visit_time,
-            COUNT(*) AS total_reviews,
-            (AVG(waiting_time) + AVG(professionalism) + AVG(politeness) + AVG(clarity) + AVG(cleanliness) + AVG(visit_time)) / 6 AS overall_rating
-          FROM service_ratings
-          WHERE id = ?";
-$stmt = $conn->prepare($query);
+require_once __DIR__ . '/api.php';
+requireMethod('GET');
+$id = positiveId($_GET['id'] ?? null);
+$conn = database();
+$stmt = $conn->prepare('SELECT e.id,
+    AVG(r.waiting_time) AS waiting_time, AVG(r.professionalism) AS professionalism,
+    AVG(r.politeness) AS politeness, AVG(r.clarity) AS clarity,
+    AVG(r.cleanliness) AS cleanliness, AVG(r.visit_time) AS visit_time,
+    COUNT(r.rating_id) AS total_reviews,
+    AVG((r.waiting_time + r.professionalism + r.politeness + r.clarity + r.cleanliness + r.visit_time) / 6) AS overall_rating
+    FROM emergency_stations e LEFT JOIN service_ratings r ON e.id = r.id
+    WHERE e.id = ? GROUP BY e.id');
 $stmt->bind_param('i', $id);
 $stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows > 0) {
-    echo json_encode($result->fetch_assoc());
-} else {
-    echo json_encode(['error' => 'Нет данных для указанного травмпункта']);
+$stats = $stmt->get_result()->fetch_assoc();
+if (!$stats) {
+    respond(['error' => 'Травмпункт не найден.'], 404);
 }
-
-$stmt->close();
-$conn->close();
-?>
+respond($stats);

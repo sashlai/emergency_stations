@@ -1,214 +1,204 @@
-const map = L.map('map').setView([55.751244, 37.618423], 12);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-}).addTo(map);
-
 const selectElement = document.getElementById('trauma-center-select');
 const searchInput = document.getElementById('search-input');
-const suggestionsContainer = document.getElementById('suggestions');
-
+const suggestions = document.getElementById('suggestions');
+const loadStatus = document.getElementById('load-status');
+const surveyStatus = document.getElementById('survey-status');
+const statsStatus = document.getElementById('statistics-status');
+const form = document.getElementById('survey-form');
+const submitButton = form.querySelector('button');
 const infoBox = document.getElementById('trauma-center-info');
-const infoCategory = document.getElementById('info-category');
-const infoChief = document.getElementById('info-chief');
-const infoPosition = document.getElementById('info-position');
-const infoGender = document.getElementById('info-gender');
-const infoStatus = document.getElementById('info-status');
-const infoExtra = document.getElementById('info-extra');
+const statisticsBox = document.getElementById('statistics');
+const markers = new Map();
+const fields = ['waiting_time', 'professionalism', 'politeness', 'clarity', 'cleanliness', 'visit_time'];
+let traumaCenters = [];
+let statisticsVersion = 0;
+let activeSuggestion = -1;
+let isSubmitting = false;
+let map;
 
-let traumaCenters = []; 
-const markers = {}; 
-
-fetch('/emergency_stations/db_connection.php')
-    .then(response => response.json())
-    .then(data => {
-        traumaCenters = data; 
-        populateCenters(traumaCenters); 
-    })
-    .catch(error => {
-        console.error('Ошибка при загрузке данных:', error);
-    });
-
-function populateCenters(centers) {
-    centers.forEach(center => {
-        const geoData = typeof center.geoData === 'string' ? JSON.parse(center.geoData) : center.geoData;
-        const coordinates = geoData.coordinates[0];
-        const lat = coordinates[1];
-        const lng = coordinates[0];
-
-        const marker = L.marker([lat, lng]).addTo(map).bindPopup(center.ShortName);
-        markers[center.id] = marker;
-
-        marker.on('click', () => {
-            map.setView([lat, lng], 15);
-            selectElement.value = center.id;
-            displayInfo(center);
-            loadStatistics(center.id);
-        });
-
-        const option = document.createElement('option');
-        option.value = center.id;
-        option.textContent = center.ShortName;
-        selectElement.appendChild(option);
-    });
+try {
+    map = L.map('map').setView([55.751244, 37.618423], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+} catch {
+    document.getElementById('map').textContent = 'Карта недоступна. Воспользуйтесь поиском или списком травмпунктов.';
 }
 
-function displayInfo(center) {
-    infoCategory.textContent = center.Category || 'Нет данных';
-    infoChief.textContent = center.ChiefName || 'Нет данных';
-    infoPosition.textContent = center.ChiefPosition || 'Нет данных';
-    infoGender.textContent = center.ChiefGender || 'Нет данных';
-    infoStatus.textContent = center.CloseFlag || 'Нет данных';
-    infoExtra.textContent = center.Extrainfo || 'Нет данных';
-    infoBox.style.display = 'block';
+function coordinates(center) {
+    try {
+        const geo = typeof center.geoData === 'string' ? JSON.parse(center.geoData) : center.geoData;
+        const point = geo?.type === 'Point' ? geo.coordinates : geo?.coordinates?.[0];
+        if (!Array.isArray(point) || point.length < 2 ||
+            !point.slice(0, 2).every(value => typeof value === 'number' && Number.isFinite(value)) ||
+            Math.abs(point[0]) > 180 || Math.abs(point[1]) > 90) return null;
+        return [point[1], point[0]];
+    } catch { return null; }
 }
 
-function loadStatistics(traumaCenterId) {
-    fetch(`/emergency_stations/get_statistics.php?id=${traumaCenterId}`)
-        .then(response => response.json())
-        .then(stats => {
-            const statisticsBox = document.getElementById('statistics');
-            statisticsBox.style.display = 'block';
-
-            document.getElementById('stat-waiting-time').textContent =
-                stats.waiting_time ? parseFloat(stats.waiting_time).toFixed(2) : 'Нет данных';
-
-            document.getElementById('stat-professionalism').textContent =
-                stats.professionalism ? parseFloat(stats.professionalism).toFixed(2) : 'Нет данных';
-
-            document.getElementById('stat-politeness').textContent =
-                stats.politeness ? parseFloat(stats.politeness).toFixed(2) : 'Нет данных';
-
-            document.getElementById('stat-clarity').textContent =
-                stats.clarity ? parseFloat(stats.clarity).toFixed(2) : 'Нет данных';
-
-            document.getElementById('stat-cleanliness').textContent =
-                stats.cleanliness ? parseFloat(stats.cleanliness).toFixed(2) : 'Нет данных';
-
-            document.getElementById('stat-visit-time').textContent =
-                stats.visit_time ? parseFloat(stats.visit_time).toFixed(2) : 'Нет данных';
-
-            document.getElementById('stat-total-reviews').textContent =
-                stats.total_reviews ? stats.total_reviews : 'Нет данных';
-
-            document.getElementById('stat-overall-rating').textContent =
-                stats.overall_rating ? parseFloat(stats.overall_rating).toFixed(2) : 'Нет данных';
-        })
-        .catch(error => {
-            console.error('Ошибка при загрузке статистики:', error);
-        });
+function clearSuggestions() {
+    suggestions.replaceChildren();
+    suggestions.hidden = true;
+    searchInput.setAttribute('aria-expanded', 'false');
+    searchInput.removeAttribute('aria-activedescendant');
+    activeSuggestion = -1;
 }
 
-selectElement.addEventListener('change', event => {
-    const selectedId = event.target.value;
+function selectCenter(center) {
+    clearSuggestions();
+    ++statisticsVersion;
+    showStatus(surveyStatus);
+    submitButton.disabled = !center || isSubmitting;
+    if (!center) {
+        infoBox.hidden = true;
+        statisticsBox.hidden = true;
+        return;
+    }
+    selectElement.value = center.id;
+    searchInput.value = center.ShortName;
+    const infoFields = {
+        category: 'Category', chief: 'ChiefName', position: 'ChiefPosition',
+        status: 'CloseFlag', extra: 'Extrainfo', hours: 'ClarificationWorkingHours', age: 'AgeRestriction'
+    };
+    for (const [target, source] of Object.entries(infoFields)) {
+        document.getElementById('info-' + target).textContent = center[source] || 'Нет данных';
+    }
+    document.getElementById('info-name').textContent = center.ShortName;
+    infoBox.hidden = false;
+    const point = coordinates(center);
+    if (map && point) {
+        map.setView(point, 15);
+        markers.get(String(center.id))?.openPopup();
+    }
+    loadStatistics(center.id);
+}
 
-    if (selectedId !== "") {
-        const selectedCenter = traumaCenters.find(center => center.id == selectedId);
+async function loadStatistics(id) {
+    const version = ++statisticsVersion;
+    statisticsBox.hidden = false;
+    document.getElementById('statistics-values').hidden = true;
+    showStatus(statsStatus, 'Загружаем оценки…');
+    try {
+        const stats = await requestJson('get_statistics.php?id=' + encodeURIComponent(id));
+        if (version !== statisticsVersion) return;
+        for (const field of fields) {
+            document.getElementById('stat-' + field.replaceAll('_', '-')).textContent = formatRating(stats[field]);
+        }
+        document.getElementById('stat-total-reviews').textContent = stats.total_reviews ?? 0;
+        document.getElementById('stat-overall-rating').textContent = formatRating(stats.overall_rating);
+        document.getElementById('statistics-values').hidden = false;
+        showStatus(statsStatus, Number(stats.total_reviews) === 0 ? 'Здесь ещё нет отзывов. Вы можете оставить первый.' : '');
+    } catch (error) {
+        if (version === statisticsVersion) showStatus(statsStatus, error.message, true);
+    }
+}
 
-        if (selectedCenter && selectedCenter.geoData) {
-            const geoData = typeof selectedCenter.geoData === 'string'
-                ? JSON.parse(selectedCenter.geoData)
-                : selectedCenter.geoData;
-
-            if (geoData.coordinates && geoData.coordinates[0]) {
-                const coordinates = geoData.coordinates[0];
-                const lat = coordinates[1];
-                const lng = coordinates[0];
-
-                map.setView([lat, lng], 15);
-
-                const marker = markers[selectedCenter.id];
-                if (marker) {
-                    marker.openPopup();
-                }
-                displayInfo(selectedCenter); 
-                loadStatistics(selectedCenter.id); 
+async function loadCenters() {
+    showStatus(loadStatus, 'Загружаем травмпункты…');
+    document.getElementById('retry-load').hidden = true;
+    try {
+        const data = await requestJson('db_connection.php');
+        if (!Array.isArray(data)) throw new Error('Не удалось загрузить список травмпунктов.');
+        traumaCenters = data;
+        for (const center of data) {
+            const option = document.createElement('option');
+            option.value = center.id;
+            option.textContent = center.ShortName;
+            selectElement.append(option);
+            const point = coordinates(center);
+            if (map && point) {
+                const label = document.createElement('span');
+                label.textContent = center.ShortName;
+                const marker = L.marker(point).addTo(map).bindPopup(label);
+                marker.on('click', () => selectCenter(center));
+                markers.set(String(center.id), marker);
             }
         }
-    } else {
-        infoBox.style.display = 'none';
-        document.getElementById('statistics').style.display = 'none';
+        searchInput.disabled = data.length === 0;
+        selectElement.disabled = data.length === 0;
+        showStatus(loadStatus, data.length ? 'В каталоге: ' + data.length + ' травмпунктов.' : 'В каталоге пока нет травмпунктов.');
+    } catch (error) {
+        showStatus(loadStatus, error.message, true);
+        document.getElementById('retry-load').hidden = false;
     }
-});
-
-function showSuggestions(query) {
-    suggestionsContainer.innerHTML = '';
-
-    if (!query.trim()) {
-        return;
-    }
-
-    const filteredCenters = traumaCenters.filter(center =>
-        center.ShortName.toLowerCase().includes(query.toLowerCase())
-    );
-
-    if (filteredCenters.length === 0) {
-        suggestionsContainer.innerHTML = '<div class="suggestion-item">Ничего не найдено</div>';
-        return;
-    }
-
-    filteredCenters.forEach(center => {
-        const suggestionItem = document.createElement('div');
-        suggestionItem.textContent = center.ShortName;
-        suggestionItem.classList.add('suggestion-item');
-
-        suggestionItem.addEventListener('click', () => {
-            const geoData = typeof center.geoData === 'string' ? JSON.parse(center.geoData) : center.geoData;
-            const coordinates = geoData.coordinates[0];
-
-            map.setView([coordinates[1], coordinates[0]], 15);
-            selectElement.value = center.id;
-            searchInput.value = center.ShortName;
-            suggestionsContainer.innerHTML = '';
-            displayInfo(center); 
-            loadStatistics(center.id); 
-        });
-
-        suggestionsContainer.appendChild(suggestionItem);
-    });
 }
 
-searchInput.addEventListener('input', event => {
-    const query = event.target.value;
-    showSuggestions(query);
+document.getElementById('retry-load').addEventListener('click', loadCenters);
+selectElement.addEventListener('change', () => {
+    selectCenter(traumaCenters.find(center => String(center.id) === selectElement.value));
 });
 
-document.getElementById('survey-form').addEventListener('submit', (event) => {
-    event.preventDefault();
-
-    const traumaCenterId = selectElement.value;
-    if (!traumaCenterId) {
-        alert('Пожалуйста, выберите травмпункт.');
-        return;
+searchInput.addEventListener('input', () => {
+    clearSuggestions();
+    const query = searchInput.value.trim().toLocaleLowerCase('ru');
+    if (!query) return;
+    const matches = traumaCenters.filter(center => center.ShortName.toLocaleLowerCase('ru').includes(query)).slice(0, 10);
+    suggestions.hidden = false;
+    searchInput.setAttribute('aria-expanded', 'true');
+    if (!matches.length) {
+        const empty = document.createElement('div');
+        empty.className = 'suggestion-empty';
+        empty.textContent = 'Ничего не найдено';
+        suggestions.append(empty);
     }
-
-    const data = {
-        id: traumaCenterId,
-        waiting_time: document.getElementById('waiting-time').value,
-        professionalism: document.getElementById('professionalism').value,
-        politeness: document.getElementById('politeness').value,
-        clarity: document.getElementById('clarity').value,
-        cleanliness: document.getElementById('cleanliness').value,
-        visit_time: document.getElementById('visit-time').value
-    };
-
-    fetch('/emergency_stations/save_rating.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                alert('Спасибо за ваш отзыв!');
-                loadStatistics(traumaCenterId); 
-            } else {
-                alert('Ошибка при сохранении оценки: ' + result.error);
-            }
-        })
-        .catch(error => {
-            console.error('Ошибка при отправке данных:', error);
-        });
+    matches.forEach((center, index) => {
+        const item = document.createElement('div');
+        item.id = 'suggestion-' + index;
+        item.className = 'suggestion-item';
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', 'false');
+        item.textContent = center.ShortName;
+        item.addEventListener('click', () => selectCenter(center));
+        suggestions.append(item);
+    });
 });
+
+searchInput.addEventListener('keydown', event => {
+    if (event.key === 'Escape') { clearSuggestions(); return; }
+    const items = [...suggestions.querySelectorAll('[role="option"]')];
+    if (suggestions.hidden || !items.length) return;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        activeSuggestion = (activeSuggestion + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+        items.forEach((item, index) => item.setAttribute('aria-selected', String(index === activeSuggestion)));
+        searchInput.setAttribute('aria-activedescendant', items[activeSuggestion].id);
+        items[activeSuggestion].scrollIntoView({ block: 'nearest' });
+    } else if (event.key === 'Enter' && activeSuggestion >= 0) {
+        event.preventDefault();
+        items[activeSuggestion].click();
+    } else if (event.key === 'Tab') clearSuggestions();
+});
+document.addEventListener('click', event => {
+    if (!event.target.closest('.search-group')) clearSuggestions();
+});
+
+form.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (isSubmitting) return;
+    const id = selectElement.value;
+    if (!id) { showStatus(surveyStatus, 'Сначала выберите травмпункт.', true); return; }
+    const data = { id: Number(id) };
+    fields.forEach(field => { data[field] = Number(document.getElementById(field.replaceAll('_', '-')).value); });
+    isSubmitting = true;
+    submitButton.disabled = true;
+    submitButton.textContent = 'Отправляем…';
+    showStatus(surveyStatus, 'Сохраняем вашу оценку…');
+    try {
+        await requestJson('save_rating.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+        });
+        if (selectElement.value === id) {
+            showStatus(surveyStatus, 'Спасибо! Ваша оценка сохранена.');
+            form.reset();
+            await loadStatistics(id);
+        }
+    } catch (error) {
+        showStatus(surveyStatus, error.message, true);
+    } finally {
+        isSubmitting = false;
+        submitButton.disabled = !selectElement.value;
+        submitButton.textContent = 'Отправить оценку';
+    }
+});
+loadCenters();

@@ -1,27 +1,8 @@
 <?php
-header('Content-Type: application/json');
-
-$conn = new mysqli('localhost', 'root', '', 'emergency_stations');
-if ($conn->connect_error) {
-    echo json_encode(['error' => 'Ошибка подключения к базе данных: ' . $conn->connect_error], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-$query = "SELECT * FROM emergency_stations";
-$result = $conn->query($query);
-
-if (!$result) {
-    echo json_encode(['error' => 'Ошибка выполнения запроса: ' . $conn->error], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-
-$centers = [];
-while ($row = $result->fetch_assoc()) {
-    $centers[] = $row;
-}
-
-echo json_encode($centers, JSON_UNESCAPED_UNICODE);
-
-$conn->close();
-?>
+require_once __DIR__ . '/api.php';
+requireMethod('GET');
+$conn = database();
+$result = $conn->query('SELECT id, ShortName, Category, ChiefName, ChiefPosition, ChiefGender,
+    CloseFlag, Extrainfo, ClarificationWorkingHours, AgeRestriction, geoData
+    FROM emergency_stations ORDER BY ShortName');
+respond($result->fetch_all(MYSQLI_ASSOC));
